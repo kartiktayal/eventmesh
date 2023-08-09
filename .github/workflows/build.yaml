@@ -18,9 +18,8 @@
 #
 name: Build
 on:
-  push:
-    branches:
-      - master
+  release:
+    types: [released]
 
 jobs:
   docker:
@@ -33,10 +32,20 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            kartiktayal/eventmesh
+          tags: |
+            type=semver,pattern={{version}}
+
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
           push: true
-          tags: kartiktayal/eventmesh:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           file: ./docker/Dockerfile
           context: ./
